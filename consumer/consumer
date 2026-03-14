@@ -1,0 +1,37 @@
+package producer;
+
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.Connection;
+import com.rabbitmq.client.ConnectionFactory;
+
+public class Producer {
+
+    private static final String QUEUE_NAME = "transacciones";
+
+    public static void main(String[] args) {
+        try {
+            ConnectionFactory factory = new ConnectionFactory();
+            factory.setHost("localhost");
+
+            Connection connection = factory.newConnection();
+            Channel channel = connection.createChannel();
+
+            // Crear la cola
+            channel.queueDeclare(QUEUE_NAME, false, false, false, null);
+
+            // Mensajes de prueba (transacciones)
+            String[] transacciones = {"1001", "1002", "1003", "1001", "1004"};
+
+            for (String t : transacciones) {
+                channel.basicPublish("", QUEUE_NAME, null, t.getBytes());
+                System.out.println("Transacción enviada: " + t);
+            }
+
+            channel.close();
+            connection.close();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}

@@ -26,4 +26,4 @@ public class PuntajeArreglo {
         System.out.println("Resultado 2: " + score(arreglo2));
         System.out.println("Resultado 3: " + score(arreglo3));
     }
-}
+}s

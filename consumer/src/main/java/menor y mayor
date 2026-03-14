@@ -42,4 +42,4 @@ public class MenorMayor {
         System.out.println("Segundo menor: " + resultado[0]);
         System.out.println("Segundo mayor: " + resultado[1]);
     }
-}
+}s
