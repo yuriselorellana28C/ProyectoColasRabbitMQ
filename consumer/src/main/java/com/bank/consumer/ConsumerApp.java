@@ -5,63 +5,36 @@ Carnet: 0905-2422-303
 Correo: dorellanao4@miumg.edu.gt
 */
 
+package com.bank.consumer;
+
 import com.rabbitmq.client.*;
-import java.nio.charset.StandardCharsets;
-import java.util.HashSet;
-import java.util.Set;
 
-public class Consumer {
+public class ConsumerApp {
 
-    private static final String COLA_TRANSACCIONES = "transacciones";
-    private static final String COLA_DUPLICADOS = "duplicados";
-
-    // Aquí guardamos los IDs ya procesados
-    private static final Set<String> transaccionesProcesadas = new HashSet<>();
+    private final static String[] BANCOS = {"BAC", "BANRURAL", "BI", "GYT"};
 
     public static void main(String[] args) throws Exception {
 
         ConnectionFactory factory = new ConnectionFactory();
         factory.setHost("localhost");
+        factory.setUsername("guest");
+        factory.setPassword("guest");
 
         Connection connection = factory.newConnection();
         Channel channel = connection.createChannel();
 
-        // Declarar colas
-        channel.queueDeclare(COLA_TRANSACCIONES, false, false, false, null);
-        channel.queueDeclare(COLA_DUPLICADOS, false, false, false, null);
+        for (String banco : BANCOS) {
 
-        System.out.println("Esperando transacciones...");
+            channel.queueDeclare(banco, false, false, false, null);
 
-        DeliverCallback deliverCallback = (consumerTag, delivery) -> {
+            System.out.println("Esperando mensajes del banco: " + banco);
 
-            String mensaje = new String(delivery.getBody(), StandardCharsets.UTF_8);
+            DeliverCallback deliverCallback = (consumerTag, delivery) -> {
+                String mensaje = new String(delivery.getBody(), "UTF-8");
+                System.out.println("Mensaje recibido de " + banco + ": " + mensaje);
+            };
 
-            // Aquí asumimos que el mensaje ES el id de la transacción
-            String idTransaccion = mensaje;
-
-            if (transaccionesProcesadas.contains(idTransaccion)) {
-                // Si ya existe, es duplicada
-                channel.basicPublish("", COLA_DUPLICADOS, null, mensaje.getBytes(StandardCharsets.UTF_8));
-
-                System.out.println("ID Transaccion: " + idTransaccion);
-                System.out.println("Estado: DUPLICADA");
-                System.out.println("Cola destino: " + COLA_DUPLICADOS);
-                System.out.println("---------------------------");
-
-            } else {
-                // Si no existe, se procesa normal
-                transaccionesProcesadas.add(idTransaccion);
-
-                // Aquí iría el POST si ya lo tienes implementado
-                // enviarPOST(idTransaccion);
-
-                System.out.println("ID Transaccion: " + idTransaccion);
-                System.out.println("Estado: PROCESADA");
-                System.out.println("Cola destino: " + COLA_TRANSACCIONES);
-                System.out.println("---------------------------");
-            }
-        };
-
-        channel.basicConsume(COLA_TRANSACCIONES, true, deliverCallback, consumerTag -> { });
+            channel.basicConsume(banco, true, deliverCallback, consumerTag -> { });
+        }
     }
 }
